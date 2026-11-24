@@ -1,0 +1,10 @@
+# Core Web Framework
+fastapi>=0.115.0
+uvicorn>=0.30.0
+python-multipart>=0.0.9
+
+# Environment Variables
+python-dotenv>=1.0.0
+
+# Official Google Gemini SDK
+google-genai>=0.1.0

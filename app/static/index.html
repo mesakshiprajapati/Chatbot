@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Study Buddy Chat | Multimodal AI Assistant</title>
+  <meta name="description" content="Multimodal AI study companion powered by Google Gemini. Chat with text, images, and audio lectures.">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Header -->
+    <header class="app-header" role="banner">
+      <div class="header-brand">
+        <div class="brand-avatar" aria-hidden="true">
+          <span>🎓</span>
+        </div>
+        <div class="brand-info">
+          <h1 class="brand-title">Study Buddy Chat</h1>
+          <div class="status-indicator-group">
+            <span class="status-dot" id="statusDot" aria-hidden="true"></span>
+            <span class="status-text" id="statusText">Checking connection...</span>
+            <span class="model-badge" id="modelBadge">Gemini 2.5 Flash</span>
+          </div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="clearChatBtn" class="btn btn-secondary btn-sm" aria-label="Clear chat conversation" title="Clear conversation history">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          <span>Clear Chat</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Chat Container -->
+    <main class="chat-main" id="chatMain" role="log" aria-live="polite" aria-label="Study chat message history">
+      <!-- Empty State -->
+      <div class="empty-state" id="emptyState">
+        <div class="empty-state-icon" aria-hidden="true">📚</div>
+        <h2>Welcome to your Study Buddy!</h2>
+        <p class="empty-state-subtitle">
+          Ask questions, upload study diagrams/homework images, or drop audio lecture recordings.
+        </p>
+
+        <div class="quick-prompts-grid">
+          <button class="quick-prompt-card" data-prompt="Explain the difference between mitosis and meiosis in a clear comparison table.">
+            <span class="card-icon" aria-hidden="true">🧬</span>
+            <span class="card-text">Mitosis vs. Meiosis comparison</span>
+          </button>
+          <button class="quick-prompt-card" data-prompt="Walk me through solving quadratic equations using the quadratic formula with an example.">
+            <span class="card-icon" aria-hidden="true">📐</span>
+            <span class="card-text">Quadratic Formula step-by-step</span>
+          </button>
+          <button class="quick-prompt-card" data-prompt="What are the main causes and historical impacts of the Industrial Revolution?">
+            <span class="card-icon" aria-hidden="true">📜</span>
+            <span class="card-text">Industrial Revolution causes</span>
+          </button>
+          <button class="quick-prompt-card" data-prompt="Give me 5 effective memorization techniques for studying before an exam.">
+            <span class="card-icon" aria-hidden="true">💡</span>
+            <span class="card-text">Top exam memorization tips</span>
+          </button>
+        </div>
+
+        <div class="modality-guidance-chips">
+          <span class="modality-chip">💬 <strong>Text</strong>: Ask any academic question</span>
+          <span class="modality-chip">🖼️ <strong>Image</strong>: JPG, PNG, WebP (up to 5MB)</span>
+          <span class="modality-chip">🎙️ <strong>Audio</strong>: MP3, WAV, M4A, etc. (up to 15MB)</span>
+        </div>
+      </div>
+
+      <!-- Message History List -->
+      <div class="messages-list" id="messagesList" style="display: none;"></div>
+
+      <!-- Typing Indicator -->
+      <div class="typing-indicator-row" id="typingIndicator" style="display: none;" aria-live="polite">
+        <div class="assistant-avatar" aria-hidden="true">🎓</div>
+        <div class="typing-bubble">
+          <span class="typing-label">Study Buddy is thinking</span>
+          <div class="typing-dots" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Error Banner / Notification Area -->
+    <div class="notification-banner" id="notificationBanner" style="display: none;" role="alert">
+      <div class="banner-content">
+        <span class="banner-icon" aria-hidden="true">⚠️</span>
+        <span class="banner-message" id="bannerMessage"></span>
+      </div>
+      <div class="banner-actions">
+        <button id="bannerRetryBtn" class="btn btn-sm btn-retry" style="display: none;">Retry</button>
+        <button id="bannerDismissBtn" class="btn btn-icon btn-sm" aria-label="Dismiss message">✕</button>
+      </div>
+    </div>
+
+    <!-- Attachment Tray (active when file selected) -->
+    <section class="attachment-tray" id="attachmentTray" style="display: none;" aria-label="Pending file attachment">
+      <div class="attachment-preview-box">
+        <div class="attachment-preview-content" id="attachmentPreviewContent">
+          <!-- Populated by JS -->
+        </div>
+        <button id="removeAttachmentBtn" class="btn btn-icon attachment-remove-btn" aria-label="Remove attached file" title="Remove attachment">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- Input Footer Bar -->
+    <footer class="input-container" role="contentinfo">
+      <!-- Hidden file inputs -->
+      <input type="file" id="imageInput" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" style="display: none;" aria-hidden="true">
+      <input type="file" id="audioInput" accept=".mp3,.wav,.m4a,.aac,.ogg,.flac,.webm,audio/*" style="display: none;" aria-hidden="true">
+
+      <div class="input-form-wrapper">
+        <div class="input-toolbar">
+          <button type="button" id="attachImageBtn" class="btn-tool" aria-label="Attach an image file (JPG, PNG, WebP up to 5MB)" title="Attach Image (JPG, PNG, WebP)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+            <span class="tool-label">Image</span>
+          </button>
+
+          <button type="button" id="attachAudioBtn" class="btn-tool" aria-label="Attach an audio file (MP3, WAV, M4A up to 15MB)" title="Attach Audio (MP3, WAV, M4A, etc.)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              <line x1="12" y1="19" x2="12" y2="23"></line>
+              <line x1="8" y1="23" x2="16" y2="23"></line>
+            </svg>
+            <span class="tool-label">Audio</span>
+          </button>
+        </div>
+
+        <div class="input-row">
+          <textarea
+            id="messageInput"
+            class="chat-textarea"
+            placeholder="Ask a question, request a summary, or attach media..."
+            rows="1"
+            aria-label="Your study message"
+            maxlength="4000"
+          ></textarea>
+
+          <button id="sendBtn" class="btn btn-primary send-button" aria-label="Send message" disabled>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Privacy & Compliance Notice -->
+      <div class="privacy-disclaimer">
+        <span>🔒 Powered by Google Gemini API. Media uploads are processed transiently and never stored permanently on this server.</span>
+      </div>
+    </footer>
+  </div>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>
